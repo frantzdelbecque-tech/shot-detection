@@ -127,7 +127,7 @@ export function MovieVideoSection({
   return (
     <>
       <section
-        className="sticky top-14 z-30 -mx-4 mb-8 border-b border-zinc-800/90 bg-black px-4 pb-5 pt-0 shadow-[0_8px_32px_rgba(0,0,0,0.65)] sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+        className="sticky top-14 z-30 -mx-4 mb-8 bg-black px-4 pb-5 pt-0 shadow-[0_8px_32px_rgba(0,0,0,0.65)] sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
         aria-label="Lecteur vidéo"
       >
         <div className="relative z-40 -mx-4 mb-4 flex flex-wrap items-center gap-3 border-b border-zinc-800 bg-black px-4 pb-3 pt-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
@@ -150,11 +150,13 @@ export function MovieVideoSection({
             {isMerging ? "Fusion en cours..." : "Fusionner la sélection"}
           </button>
         </div>
-        <BunnyVideoPlayer
-          embedUrl={embedUrl}
-          title={title}
-          seekSignal={seekSignal}
-        />
+        <div className="mx-auto w-full max-w-xl">
+          <BunnyVideoPlayer
+            embedUrl={embedUrl}
+            title={title}
+            seekSignal={seekSignal}
+          />
+        </div>
       </section>
 
       <section>

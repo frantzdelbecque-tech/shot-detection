@@ -55,7 +55,7 @@ export default async function MovieDetailPage({
       "id, scene_number, vignette_url, start_time, end_time, decor, action_generale, nb_perso_total, personnages",
     )
     .eq(SD_SHOT_MOVIE_FK, id)
-    .order("scene_number", { ascending: true, nullsFirst: false });
+    .order("start_time", { ascending: true, nullsFirst: false });
 
   const shots = (shotsError ? [] : (shotsRaw ?? [])) as SdShotRow[];
   const edlFilename = row.file_name.replace(/\.[^/.]+$/, "") + ".edl";
