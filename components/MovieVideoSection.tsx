@@ -29,7 +29,6 @@ type MovieVideoSectionProps = {
   shots: SdShotRow[];
   cacheBuster: string;
   edlFilename: string;
-  edlContent: string;
 };
 
 function withCacheBuster(url: string, cacheBuster: string): string {
@@ -48,7 +47,6 @@ export function MovieVideoSection({
   shots,
   cacheBuster,
   edlFilename,
-  edlContent,
 }: MovieVideoSectionProps) {
   const router = useRouter();
   const [seekSignal, setSeekSignal] = useState<SeekSignal | null>(null);
@@ -142,7 +140,7 @@ export function MovieVideoSection({
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl">
             {title}
           </h1>
-          <DownloadEdlButton content={edlContent} filename={edlFilename} />
+          <DownloadEdlButton fileName={edlFilename} shots={shots} />
           <button
             type="button"
             onClick={handleMergeSelection}

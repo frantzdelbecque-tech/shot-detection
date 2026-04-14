@@ -1,17 +1,20 @@
 "use client";
 
+import { generateEDL, type EDLShot } from "@/lib/edl";
+
 type DownloadEdlButtonProps = {
-  filename: string;
-  content: string;
+  fileName: string;
+  shots: EDLShot[];
 };
 
-export function DownloadEdlButton({ filename, content }: DownloadEdlButtonProps) {
+export function DownloadEdlButton({ fileName, shots }: DownloadEdlButtonProps) {
   const handleDownload = () => {
+    const content = generateEDL(shots, fileName);
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = filename.endsWith(".edl") ? filename : `${filename}.edl`;
+    link.download = fileName.endsWith(".edl") ? fileName : `${fileName}.edl`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

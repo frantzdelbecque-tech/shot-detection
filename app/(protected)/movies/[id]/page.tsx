@@ -14,7 +14,6 @@ type SdMovieRow = {
   file_name: string;
   thumbnail_url: string | null;
   bunny_url: string | null;
-  edl_content: string | null;
   status: string;
 };
 
@@ -40,9 +39,7 @@ export default async function MovieDetailPage({
 
   const { data: movie, error: movieError } = await supabase
     .from(SD_MOVIE_TABLE)
-    .select(
-      "id, file_name, thumbnail_url, status, bunny_url, edl_content",
-    )
+    .select("id, file_name, thumbnail_url, status, bunny_url")
     .eq("id", id)
     .maybeSingle();
 
@@ -77,7 +74,6 @@ export default async function MovieDetailPage({
         title={row.file_name}
         shots={shots}
         cacheBuster={shotVignetteCacheBuster}
-        edlContent={row.edl_content ?? ""}
         edlFilename={edlFilename}
       />
     </div>
