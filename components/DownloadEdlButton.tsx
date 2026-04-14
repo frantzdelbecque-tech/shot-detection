@@ -27,7 +27,7 @@ export function DownloadEdlButton({ fileName, shots }: DownloadEdlButtonProps) {
       onClick={handleDownload}
       className="inline-flex rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800"
     >
-      Download .edl
+      Download EDL
     </button>
   );
 }
