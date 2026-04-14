@@ -10,6 +10,7 @@ const PLAYERJS_CONTEXT = "player.js";
 const PLAYERJS_VERSION = "0.0.11";
 
 type SeekSignal = { value: number; nonce: number };
+type PlayerReadyMessage = { context?: string; event?: string };
 
 function buildPlayerJsSeekMessage(seconds: number): string {
   return JSON.stringify({
@@ -69,13 +70,13 @@ export function BunnyVideoPlayer({
     function onMessage(event: MessageEvent) {
       if (!BUNNY_PLAYER_ORIGINS.has(event.origin)) return;
 
-      let data: { context?: string; event?: string } | null = null;
+      let data: PlayerReadyMessage | null = null;
 
       try {
         data =
           typeof event.data === "string"
-            ? (JSON.parse(event.data) as typeof data)
-            : (event.data as typeof data);
+            ? (JSON.parse(event.data) as PlayerReadyMessage)
+            : (event.data as PlayerReadyMessage);
       } catch {
         return;
       }
