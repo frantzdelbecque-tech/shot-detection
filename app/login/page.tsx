@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -64,104 +65,117 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <div className="w-full max-w-md rounded-lg border border-zinc-800 bg-black p-6 shadow-xl sm:p-8">
-        <div className="mb-8 flex rounded-md border border-zinc-800 p-0.5">
-          <button
-            type="button"
-            onClick={() => {
-              setTab("signin");
-              setError(null);
-              setSignupMessage(null);
-            }}
-            className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
-              tab === "signin"
-                ? "bg-[#222222] text-white"
-                : "bg-transparent text-zinc-500"
-            }`}
-          >
-            Connexion
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTab("signup");
-              setError(null);
-              setSignupMessage(null);
-            }}
-            className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
-              tab === "signup"
-                ? "bg-[#222222] text-white"
-                : "bg-transparent text-zinc-500"
-            }`}
-          >
-            Inscription
-          </button>
+      <div className="w-full max-w-md">
+        <div className="mb-6 overflow-hidden rounded-lg border border-zinc-800 shadow-xl">
+          <Image
+            src="/shot_detection.png"
+            alt="Shot Detection"
+            width={1200}
+            height={630}
+            priority
+            className="h-auto w-full"
+          />
         </div>
 
-        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
-          <div>
-            <label
-              htmlFor="email"
-              className="mb-1.5 block text-sm text-white"
+        <div className="rounded-lg border border-zinc-800 bg-black p-6 shadow-xl sm:p-8">
+          <div className="mb-8 flex rounded-md border border-zinc-800 p-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                setTab("signin");
+                setError(null);
+                setSignupMessage(null);
+              }}
+              className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
+                tab === "signin"
+                  ? "bg-[#222222] text-white"
+                  : "bg-transparent text-zinc-500"
+              }`}
             >
-              E-mail
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-zinc-700 bg-[#F0F4FF] px-3 py-2.5 text-sm text-zinc-900 outline-none ring-zinc-500 focus:ring-2"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="password"
-              className="mb-1.5 block text-sm text-white"
+              Connexion
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTab("signup");
+                setError(null);
+                setSignupMessage(null);
+              }}
+              className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
+                tab === "signup"
+                  ? "bg-[#222222] text-white"
+                  : "bg-transparent text-zinc-500"
+              }`}
             >
-              Mot de passe
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete={
-                tab === "signin" ? "current-password" : "new-password"
-              }
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-zinc-700 bg-[#F0F4FF] px-3 py-2.5 text-sm text-zinc-900 outline-none ring-zinc-500 focus:ring-2"
-            />
+              Inscription
+            </button>
           </div>
 
-          {error ? (
-            <p className="text-sm text-red-400" role="alert">
-              {error}
-            </p>
-          ) : null}
-          {signupMessage ? (
-            <p className="text-sm text-zinc-400" role="status">
-              {signupMessage}
-            </p>
-          ) : null}
+          <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-1.5 block text-sm text-white"
+              >
+                E-mail
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-md border border-zinc-700 bg-[#F0F4FF] px-3 py-2.5 text-sm text-zinc-900 outline-none ring-zinc-500 focus:ring-2"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="password"
+                className="mb-1.5 block text-sm text-white"
+              >
+                Mot de passe
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete={
+                  tab === "signin" ? "current-password" : "new-password"
+                }
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-md border border-zinc-700 bg-[#F0F4FF] px-3 py-2.5 text-sm text-zinc-900 outline-none ring-zinc-500 focus:ring-2"
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-white py-3 text-sm font-bold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {loading
-              ? "…"
-              : tab === "signin"
-                ? "Se connecter"
-                : "S'inscrire"}
-          </button>
-        </form>
+            {error ? (
+              <p className="text-sm text-red-400" role="alert">
+                {error}
+              </p>
+            ) : null}
+            {signupMessage ? (
+              <p className="text-sm text-zinc-400" role="status">
+                {signupMessage}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-md bg-white py-3 text-sm font-bold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {loading
+                ? "…"
+                : tab === "signin"
+                  ? "Se connecter"
+                  : "S'inscrire"}
+            </button>
+          </form>
+        </div>
       </div>
 
     </div>
