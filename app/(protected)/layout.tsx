@@ -17,10 +17,15 @@ export default async function ProtectedLayout({
   }
 
   const email = user.email ?? "";
+  const role = user.app_metadata?.role;
+  const isAdmin =
+    role === "admin" ||
+    user.user_metadata?.is_admin === true ||
+    user.user_metadata?.isAdmin === true;
 
   return (
     <div className="flex min-h-dvh flex-col bg-black text-zinc-50">
-      <Header email={email} />
+      <Header email={email} isAdmin={isAdmin} />
       <main className="flex min-h-0 flex-1 flex-col bg-black">{children}</main>
     </div>
   );

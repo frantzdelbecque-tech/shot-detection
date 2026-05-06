@@ -23,10 +23,25 @@ type SdShotRow = {
   vignette_url: string | null;
   start_time: unknown;
   end_time: unknown;
+  nb_images?: number | null;
+  nb_frames?: number | null;
+  vfx_id_cleaned?: string | null;
+  vfx_id_cleande?: string | null;
+  sequence_vfx_id?: string | null;
+  sequence_category?: string | null;
+  sequence_description?: string | null;
+  sequence_descritpion?: string | null;
+  sequence_comment?: string | null;
+  sequence_comments?: string | null;
+  episode_name?: string | null;
+  edit_sequence_nme?: string | null;
+  edit_shot_description?: string | null;
+  edit_shot_notes?: string | null;
   decor: string | null;
   action_generale: string | null;
   nb_perso_total: number | null;
   personnages: unknown;
+  [key: string]: unknown;
 };
 
 export default async function MovieDetailPage({
@@ -36,6 +51,14 @@ export default async function MovieDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const role = user?.app_metadata?.role;
+  const isAdmin =
+    role === "admin" ||
+    user?.user_metadata?.is_admin === true ||
+    user?.user_metadata?.isAdmin === true;
 
   const { data: movie, error: movieError } = await supabase
     .from(SD_MOVIE_TABLE)
@@ -51,18 +74,16 @@ export default async function MovieDetailPage({
 
   const { data: shotsRaw, error: shotsError } = await supabase
     .from(SD_SHOTS_TABLE)
-    .select(
-      "id, scene_number, vignette_url, start_time, end_time, decor, action_generale, nb_perso_total, personnages",
-    )
+    .select("*")
     .eq(SD_SHOT_MOVIE_FK, id)
     .order("start_time", { ascending: true, nullsFirst: false });
 
   const shots = (shotsError ? [] : (shotsRaw ?? [])) as SdShotRow[];
   const edlFilename = row.file_name.replace(/\.[^/.]+$/, "") + ".edl";
-  const shotVignetteCacheBuster = Date.now().toString();
+  const shotVignetteCacheBuster = id;
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto w-[90%] max-w-none px-4 py-10 sm:px-6 lg:px-8">
       {shotsError && (
         <p className="mb-6 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
           Impossible de charger les plans : {shotsError.message}
@@ -70,9 +91,11 @@ export default async function MovieDetailPage({
       )}
 
       <MovieVideoSection
+        movieId={id}
         embedUrl={buildBunnyEmbedUrl(row.bunny_url)}
         title={row.file_name}
         shots={shots}
+        isAdmin={isAdmin}
         cacheBuster={shotVignetteCacheBuster}
         edlFilename={edlFilename}
       />

@@ -3,9 +3,10 @@ import Image from "next/image";
 
 type HeaderProps = {
   email: string;
+  isAdmin: boolean;
 };
 
-export function Header({ email }: HeaderProps) {
+export function Header({ email, isAdmin }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between border-b border-white/10 bg-black px-4 sm:px-6">
       <div className="flex items-center gap-2">
@@ -28,6 +29,14 @@ export function Header({ email }: HeaderProps) {
         >
           {email}
         </span>
+        {isAdmin ? (
+          <span
+            className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300 sm:text-xs"
+            title="Utilisateur administrateur"
+          >
+            Admin
+          </span>
+        ) : null}
         <SignOutButton />
       </div>
     </header>

@@ -3,11 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { BunnyVideoPlayer } from "@/components/BunnyVideoPlayer";
 import { DownloadEdlButton } from "@/components/DownloadEdlButton";
-import { formatTimeValue, parseStartTimeSeconds } from "@/lib/shot-time";
-import { PersonnagesList, normalizePersonnages } from "@/components/PersonnagesList";
+import {
+  computeFrameCount,
+  formatTimeValue,
+  formatTimecode,
+  parseStartTimeSeconds,
+} from "@/lib/shot-time";
 
 type SdShotRow = {
   id: string;
@@ -15,18 +19,35 @@ type SdShotRow = {
   vignette_url: string | null;
   start_time: unknown;
   end_time: unknown;
+  nb_images?: number | null;
+  nb_frames?: number | null;
+  vfx_id_cleaned?: string | null;
+  vfx_id_cleande?: string | null;
+  sequence_vfx_id?: string | null;
+  sequence_category?: string | null;
+  sequence_description?: string | null;
+  sequence_descritpion?: string | null;
+  sequence_comment?: string | null;
+  sequence_comments?: string | null;
+  episode_name?: string | null;
+  edit_sequence_nme?: string | null;
+  edit_shot_description?: string | null;
+  edit_shot_notes?: string | null;
   decor: string | null;
   action_generale: string | null;
   nb_perso_total: number | null;
   personnages: unknown;
+  [key: string]: unknown;
 };
 
 type SeekSignal = { value: number; nonce: number };
 
 type MovieVideoSectionProps = {
+  movieId: string;
   embedUrl: string | null;
   title: string;
   shots: SdShotRow[];
+  isAdmin: boolean;
   cacheBuster: string;
   edlFilename: string;
 };
@@ -41,10 +62,17 @@ function withCacheBuster(url: string, cacheBuster: string): string {
   }
 }
 
+function toFilterValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+}
+
 export function MovieVideoSection({
+  movieId,
   embedUrl,
   title,
   shots,
+  isAdmin,
   cacheBuster,
   edlFilename,
 }: MovieVideoSectionProps) {
@@ -52,6 +80,128 @@ export function MovieVideoSection({
   const [seekSignal, setSeekSignal] = useState<SeekSignal | null>(null);
   const [selectedShots, setSelectedShots] = useState<string[]>([]);
   const [isMerging, setIsMerging] = useState(false);
+  const [sequenceVfxIdFilter, setSequenceVfxIdFilter] = useState("");
+  const [sequenceCategoryFilter, setSequenceCategoryFilter] = useState("");
+  const [sequenceCommentFilter, setSequenceCommentFilter] = useState("");
+  const [episodeNameFilter, setEpisodeNameFilter] = useState("");
+  const [shotNameFilter, setShotNameFilter] = useState("");
+
+  const sequenceVfxIdOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          shots
+            .map((shot) => toFilterValue(shot.sequence_vfx_id))
+            .filter((value) => value !== ""),
+        ),
+      ).sort((a, b) => a.localeCompare(b)),
+    [shots],
+  );
+
+  const sequenceCategoryOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          shots
+            .map((shot) => toFilterValue(shot.sequence_category))
+            .filter((value) => value !== ""),
+        ),
+      ).sort((a, b) => a.localeCompare(b)),
+    [shots],
+  );
+
+  const sequenceCommentOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          shots
+            .map((shot) =>
+              toFilterValue(shot.sequence_comments ?? shot.sequence_comment),
+            )
+            .filter((value) => value !== ""),
+        ),
+      ).sort((a, b) => a.localeCompare(b)),
+    [shots],
+  );
+
+  const episodeNameOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          shots
+            .map((shot) => toFilterValue(shot.episode_name))
+            .filter((value) => value !== ""),
+        ),
+      ).sort((a, b) => a.localeCompare(b)),
+    [shots],
+  );
+
+  const filteredShots = useMemo(() => {
+    const normalized = (value: string) => value.trim().toLowerCase();
+    const sequenceVfxFilter = normalized(sequenceVfxIdFilter);
+    const sequenceCategory = normalized(sequenceCategoryFilter);
+    const sequenceComment = normalized(sequenceCommentFilter);
+    const episodeName = normalized(episodeNameFilter);
+    const shotName = normalized(shotNameFilter);
+
+    return shots.filter((shot) => {
+      const vfxIdCleaned = String(
+        shot.vfx_id_cleaned ?? shot.vfx_id_cleande ?? "",
+      ).toLowerCase();
+      const seqVfx = String(shot.sequence_vfx_id ?? "").toLowerCase();
+      const seqCategory = String(shot.sequence_category ?? "").toLowerCase();
+      const seqCommentValue = String(
+        shot.sequence_comments ?? shot.sequence_comment ?? "",
+      ).toLowerCase();
+      const episodeValue = String(shot.episode_name ?? "").toLowerCase();
+
+      return (
+        (!shotName || vfxIdCleaned.includes(shotName)) &&
+        (!sequenceVfxFilter || seqVfx.includes(sequenceVfxFilter)) &&
+        (!sequenceCategory || seqCategory.includes(sequenceCategory)) &&
+        (!sequenceComment || seqCommentValue.includes(sequenceComment)) &&
+        (!episodeName || episodeValue.includes(episodeName))
+      );
+    });
+  }, [
+    episodeNameFilter,
+    sequenceCategoryFilter,
+    sequenceCommentFilter,
+    sequenceVfxIdFilter,
+    shotNameFilter,
+    shots,
+  ]);
+
+  const totalFrames = useMemo(
+    () =>
+      filteredShots.reduce((acc, shot) => {
+        const frameCount = computeFrameCount(
+          shot.start_time,
+          shot.end_time,
+          shot.nb_images ?? shot.nb_frames,
+        );
+        return acc + (frameCount ?? 0);
+      }, 0),
+    [filteredShots],
+  );
+
+  const displayedShots = useMemo(
+    () => (isAdmin ? filteredShots : filteredShots.slice(0, 60)),
+    [filteredShots, isAdmin],
+  );
+
+  const displayedTotalFrames = useMemo(
+    () =>
+      displayedShots.reduce((acc, shot) => {
+        const frameCount = computeFrameCount(
+          shot.start_time,
+          shot.end_time,
+          shot.nb_images ?? shot.nb_frames,
+        );
+        return acc + (frameCount ?? 0);
+      }, 0),
+    [displayedShots],
+  );
 
   const seekToShotStart = useCallback((startTime: unknown) => {
     const seconds = parseStartTimeSeconds(startTime);
@@ -163,17 +313,90 @@ export function MovieVideoSection({
         {shots.length === 0 ? (
           <p className="text-sm text-zinc-500">Aucun plan pour ce film.</p>
         ) : (
-          <div className="-mx-2 overflow-x-auto rounded-2xl border border-zinc-800 bg-zinc-950 shadow-sm sm:mx-0">
-            <table className="min-w-[1400px] table-fixed divide-y divide-zinc-800 text-xs text-zinc-200 xl:min-w-full">
+          <div className="space-y-4">
+            <div className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:grid-cols-2 xl:grid-cols-5">
+              <input
+                type="text"
+                value={shotNameFilter}
+                onChange={(e) => setShotNameFilter(e.target.value)}
+                placeholder="Filtrer Shot Name"
+                className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+              />
+              <select
+                value={sequenceVfxIdFilter}
+                onChange={(e) => setSequenceVfxIdFilter(e.target.value)}
+                className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
+              >
+                <option value="">Tous les Vfx Id</option>
+                {sequenceVfxIdOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={sequenceCategoryFilter}
+                onChange={(e) => setSequenceCategoryFilter(e.target.value)}
+                className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
+              >
+                <option value="">Toutes les Seq Category</option>
+                {sequenceCategoryOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={sequenceCommentFilter}
+                onChange={(e) => setSequenceCommentFilter(e.target.value)}
+                className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
+              >
+                <option value="">Tous les Type VFX / IA</option>
+                {sequenceCommentOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={episodeNameFilter}
+                onChange={(e) => setEpisodeNameFilter(e.target.value)}
+                className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
+              >
+                <option value="">Tous les Episode</option>
+                {episodeNameOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="text-sm text-zinc-300">
+              Plans affichés: <span className="font-semibold">{displayedShots.length}</span>{" "}
+              | Total images: <span className="font-semibold">{displayedTotalFrames}</span>
+              {!isAdmin && filteredShots.length > 60 ? (
+                <span className="text-zinc-500"> (limité à 60 pour les non-admins)</span>
+              ) : null}
+            </div>
+
+            <div className="-mx-2 overflow-x-auto rounded-2xl border border-zinc-800 bg-zinc-950 shadow-sm sm:mx-0">
+              <table className="min-w-[1850px] table-fixed divide-y divide-zinc-800 text-xs text-zinc-200 xl:min-w-full">
               <colgroup>
                 <col className="w-16" />
                 <col className="w-14" />
                 <col className="w-36" />
                 <col className="w-28" />
                 <col className="w-28" />
-                <col className="w-44" />
-                <col className="w-44" />
-                <col className="w-[460px]" />
+                <col className="w-24" />
+                <col className="w-36" />
+                <col className="w-36" />
+                <col className="w-32" />
+                <col className="w-[240px]" />
+                <col className="w-[240px]" />
+                <col className="w-[180px]" />
+                <col className="w-[200px]" />
+                <col className="w-[200px]" />
               </colgroup>
               <thead className="bg-zinc-900/60">
                 <tr>
@@ -184,32 +407,61 @@ export function MovieVideoSection({
                   <th
                     className="px-3 py-3 text-left font-medium text-zinc-300"
                     aria-label="Scène"
-                  />
+                  >
+                    Plan
+                  </th>
                   <th className="px-4 py-3 text-left font-medium text-zinc-300">
                     Vignette
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-zinc-300">
-                    Début
+                    TC Début
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-zinc-300">
-                    Fin
+                    TC Fin
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-zinc-300">
-                    Décor
+                    Images
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-zinc-300">
+                    Shot Name
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-zinc-300">
+                    Vfx Id
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-zinc-300">
+                    Seq Category
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-zinc-300">
+                    Description
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-zinc-300">
+                    Type VFX / IA
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-zinc-300">
+                    Episode
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-zinc-300">
+                    Decor
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-zinc-300">
                     Action
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-zinc-300">
-                    Personnages
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800">
-                {shots.map((shot, index) => {
+                {displayedShots.map((shot, index) => {
                   const startSeconds = parseStartTimeSeconds(shot.start_time);
-                  const vignetteInteractive = startSeconds !== null;
                   const isSelected = selectedShots.includes(shot.id);
+                  const frameCount = computeFrameCount(
+                    shot.start_time,
+                    shot.end_time,
+                    shot.nb_images ?? shot.nb_frames,
+                  );
+                  const vfxIdCleaned = shot.vfx_id_cleaned ?? shot.vfx_id_cleande;
+                  const sequenceDescription =
+                    shot.sequence_description ?? shot.sequence_descritpion;
+                  const sequenceCommentValue =
+                    shot.sequence_comments ?? shot.sequence_comment;
 
                   return (
                     <tr key={shot.id} className={isSelected ? "bg-zinc-900/40" : ""}>
@@ -223,29 +475,34 @@ export function MovieVideoSection({
                         />
                       </td>
                       <td className="px-3 py-3 align-top font-medium text-zinc-100">
-                        {shot.scene_number ?? "—"}
+                        <Link
+                          href={`/movies/${movieId}/shots/${shot.id}`}
+                          className="inline-flex rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800"
+                        >
+                          {shot.scene_number ?? "—"}
+                        </Link>
                       </td>
                       <td className="px-4 py-3 align-top">
                         <div
                           className={`relative h-16 w-28 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900 ${
-                            vignetteInteractive
+                            startSeconds !== null
                               ? "cursor-pointer ring-offset-2 ring-offset-zinc-950 transition hover:ring-2 hover:ring-zinc-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400"
                               : ""
                           }`}
-                          role={vignetteInteractive ? "button" : undefined}
-                          tabIndex={vignetteInteractive ? 0 : undefined}
+                          role={startSeconds !== null ? "button" : undefined}
+                          tabIndex={startSeconds !== null ? 0 : undefined}
                           aria-label={
-                            vignetteInteractive
+                            startSeconds !== null
                               ? `Aller à ${formatTimeValue(shot.start_time)} dans la vidéo`
                               : undefined
                           }
                           onClick={
-                            vignetteInteractive
+                            startSeconds !== null
                               ? () => seekToShotStart(shot.start_time)
                               : undefined
                           }
                           onKeyDown={
-                            vignetteInteractive
+                            startSeconds !== null
                               ? (e) => {
                                   if (e.key === "Enter" || e.key === " ") {
                                     e.preventDefault();
@@ -273,27 +530,44 @@ export function MovieVideoSection({
                         </div>
                       </td>
                       <td className="px-4 py-3 align-top">
-                        {formatTimeValue(shot.start_time)}
+                        {formatTimecode(shot.start_time, 25)}
                       </td>
                       <td className="px-4 py-3 align-top">
-                        {formatTimeValue(shot.end_time)}
+                        {formatTimecode(shot.end_time, 25)}
                       </td>
                       <td className="px-4 py-3 align-top text-zinc-300">
+                        {frameCount ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top text-zinc-300">
+                        {vfxIdCleaned ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {shot.sequence_vfx_id ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {shot.sequence_category ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {sequenceDescription ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {sequenceCommentValue ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {shot.episode_name ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top">
                         {shot.decor ?? "—"}
                       </td>
-                      <td className="px-4 py-3 align-top text-zinc-300">
-                        {shot.action_generale ?? "—"}
-                      </td>
                       <td className="px-4 py-3 align-top">
-                        <PersonnagesList
-                          entries={normalizePersonnages(shot.personnages)}
-                        />
+                        {shot.action_generale ?? "—"}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         )}
       </section>
