@@ -69,6 +69,29 @@ function toFilterValue(value: unknown): string {
   return String(value).trim();
 }
 
+function TruncatedTextCell({ value }: { value: string | null | undefined }) {
+  const text = value?.trim() ?? "";
+  if (!text) return <>—</>;
+
+  const maxChars = 35;
+  const shortened =
+    text.length > maxChars ? `${text.slice(0, maxChars - 3).trimEnd()}...` : text;
+
+  return (
+    <span
+      className="block max-w-[220px] overflow-hidden text-ellipsis"
+      style={{
+        display: "-webkit-box",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
+      }}
+      title={text}
+    >
+      {shortened}
+    </span>
+  );
+}
+
 export function MovieVideoSection({
   movieId,
   embedUrl,
@@ -569,7 +592,7 @@ export function MovieVideoSection({
                         {shot.sequence_category ?? "—"}
                       </td>
                       <td className="px-4 py-2 align-top">
-                        {sequenceDescription ?? "—"}
+                        <TruncatedTextCell value={sequenceDescription} />
                       </td>
                       <td className="px-4 py-2 align-top">
                         {sequenceCommentValue ?? "—"}
@@ -578,10 +601,10 @@ export function MovieVideoSection({
                         {shot.episode_name ?? "—"}
                       </td>
                       <td className="px-4 py-2 align-top">
-                        {shot.decor ?? "—"}
+                        <TruncatedTextCell value={shot.decor} />
                       </td>
                       <td className="px-4 py-2 align-top">
-                        {shot.action_generale ?? "—"}
+                        <TruncatedTextCell value={shot.action_generale} />
                       </td>
                     </tr>
                   );
