@@ -41,6 +41,8 @@ type SdShotRow = {
 };
 
 type SeekSignal = { value: number; nonce: number };
+const SEEK_OFFSET_FRAMES = 2;
+const TIMECODE_FPS = 25;
 
 type MovieVideoSectionProps = {
   movieId: string;
@@ -206,8 +208,9 @@ export function MovieVideoSection({
   const seekToShotStart = useCallback((startTime: unknown) => {
     const seconds = parseStartTimeSeconds(startTime);
     if (seconds === null) return;
+    const seekSeconds = Math.max(0, seconds + SEEK_OFFSET_FRAMES / TIMECODE_FPS);
     setSeekSignal((prev) => ({
-      value: seconds,
+      value: seekSeconds,
       nonce: (prev?.nonce ?? 0) + 1,
     }));
   }, []);
@@ -277,17 +280,17 @@ export function MovieVideoSection({
   return (
     <>
       <section
-        className="sticky top-14 z-30 -mx-4 mb-8 bg-black px-4 pb-5 pt-0 shadow-[0_8px_32px_rgba(0,0,0,0.65)] sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+        className="sticky top-14 z-30 -mx-4 mb-1 bg-black px-4 pb-1.5 pt-0 shadow-[0_8px_24px_rgba(0,0,0,0.65)] sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
         aria-label="Lecteur vidéo"
       >
-        <div className="relative z-40 -mx-4 mb-4 flex flex-wrap items-center gap-3 border-b border-zinc-800 bg-black px-4 pb-3 pt-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="relative z-40 -mx-4 mb-0.5 flex flex-wrap items-center gap-1 border-b border-zinc-800 bg-black px-4 pb-1 pt-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <Link
             href="/movies"
-            className="inline-flex rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-sm font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-900"
+            className="inline-flex rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[11px] font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-900"
           >
             Back
           </Link>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl">
+          <h1 className="text-sm font-semibold tracking-tight text-zinc-50 sm:text-base">
             {title}
           </h1>
           <DownloadEdlButton fileName={edlFilename} shots={shots} />
@@ -295,12 +298,12 @@ export function MovieVideoSection({
             type="button"
             onClick={handleMergeSelection}
             disabled={selectedShots.length < 2 || isMerging}
-            className="inline-flex rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:bg-zinc-900/60 disabled:text-zinc-500"
+            className="inline-flex rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[11px] font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:bg-zinc-900/60 disabled:text-zinc-500"
           >
             {isMerging ? "Fusion en cours..." : "Fusionner la sélection"}
           </button>
         </div>
-        <div className="mx-auto w-full max-w-xl">
+        <div className="mx-auto w-full max-w-sm">
           <BunnyVideoPlayer
             embedUrl={embedUrl}
             title={title}
@@ -314,64 +317,6 @@ export function MovieVideoSection({
           <p className="text-sm text-zinc-500">Aucun plan pour ce film.</p>
         ) : (
           <div className="space-y-4">
-            <div className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:grid-cols-2 xl:grid-cols-5">
-              <input
-                type="text"
-                value={shotNameFilter}
-                onChange={(e) => setShotNameFilter(e.target.value)}
-                placeholder="Filtrer Shot Name"
-                className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
-              />
-              <select
-                value={sequenceVfxIdFilter}
-                onChange={(e) => setSequenceVfxIdFilter(e.target.value)}
-                className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
-              >
-                <option value="">Tous les Vfx Id</option>
-                {sequenceVfxIdOptions.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={sequenceCategoryFilter}
-                onChange={(e) => setSequenceCategoryFilter(e.target.value)}
-                className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
-              >
-                <option value="">Toutes les Seq Category</option>
-                {sequenceCategoryOptions.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={sequenceCommentFilter}
-                onChange={(e) => setSequenceCommentFilter(e.target.value)}
-                className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
-              >
-                <option value="">Tous les Type VFX / IA</option>
-                {sequenceCommentOptions.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={episodeNameFilter}
-                onChange={(e) => setEpisodeNameFilter(e.target.value)}
-                className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
-              >
-                <option value="">Tous les Episode</option>
-                {episodeNameOptions.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="text-sm text-zinc-300">
               Plans affichés: <span className="font-semibold">{displayedShots.length}</span>{" "}
               | Total images: <span className="font-semibold">{displayedTotalFrames}</span>
@@ -447,6 +392,82 @@ export function MovieVideoSection({
                     Action
                   </th>
                 </tr>
+                <tr>
+                  <th className="px-2 py-2" />
+                  <th className="px-2 py-2" />
+                  <th className="px-2 py-2" />
+                  <th className="px-2 py-2" />
+                  <th className="px-2 py-2" />
+                  <th className="px-2 py-2" />
+                  <th className="px-2 py-2">
+                    <input
+                      type="text"
+                      value={shotNameFilter}
+                      onChange={(e) => setShotNameFilter(e.target.value)}
+                      placeholder="Filtrer"
+                      className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-[11px] text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+                    />
+                  </th>
+                  <th className="px-2 py-2">
+                    <select
+                      value={sequenceVfxIdFilter}
+                      onChange={(e) => setSequenceVfxIdFilter(e.target.value)}
+                      className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-[11px] text-zinc-100 focus:border-zinc-500 focus:outline-none"
+                    >
+                      <option value="">Tous</option>
+                      {sequenceVfxIdOptions.map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </th>
+                  <th className="px-2 py-2">
+                    <select
+                      value={sequenceCategoryFilter}
+                      onChange={(e) => setSequenceCategoryFilter(e.target.value)}
+                      className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-[11px] text-zinc-100 focus:border-zinc-500 focus:outline-none"
+                    >
+                      <option value="">Toutes</option>
+                      {sequenceCategoryOptions.map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </th>
+                  <th className="px-2 py-2" />
+                  <th className="px-2 py-2">
+                    <select
+                      value={sequenceCommentFilter}
+                      onChange={(e) => setSequenceCommentFilter(e.target.value)}
+                      className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-[11px] text-zinc-100 focus:border-zinc-500 focus:outline-none"
+                    >
+                      <option value="">Tous</option>
+                      {sequenceCommentOptions.map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </th>
+                  <th className="px-2 py-2">
+                    <select
+                      value={episodeNameFilter}
+                      onChange={(e) => setEpisodeNameFilter(e.target.value)}
+                      className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-[11px] text-zinc-100 focus:border-zinc-500 focus:outline-none"
+                    >
+                      <option value="">Tous</option>
+                      {episodeNameOptions.map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </th>
+                  <th className="px-2 py-2" />
+                  <th className="px-2 py-2" />
+                </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800">
                 {displayedShots.map((shot, index) => {
@@ -465,16 +486,16 @@ export function MovieVideoSection({
 
                   return (
                     <tr key={shot.id} className={isSelected ? "bg-zinc-900/40" : ""}>
-                      <td className="px-3 py-3 align-top">
+                      <td className="px-3 py-2 align-top">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleShotSelection(shot.id)}
                           aria-label={`Sélectionner le plan ${shot.scene_number ?? index + 1}`}
-                          className="mt-1 h-4 w-4 accent-zinc-300 rounded border-zinc-600 bg-zinc-950 text-zinc-100 focus:ring-zinc-400"
+                          className="mt-0.5 h-3.5 w-3.5 accent-zinc-300 rounded border-zinc-600 bg-zinc-950 text-zinc-100 focus:ring-zinc-400"
                         />
                       </td>
-                      <td className="px-3 py-3 align-top font-medium text-zinc-100">
+                      <td className="px-3 py-2 align-top font-medium text-zinc-100">
                         <Link
                           href={`/movies/${movieId}/shots/${shot.id}`}
                           className="inline-flex rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800"
@@ -482,9 +503,9 @@ export function MovieVideoSection({
                           {shot.scene_number ?? "—"}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-2 align-top">
                         <div
-                          className={`relative h-16 w-28 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900 ${
+                          className={`relative h-14 w-24 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900 ${
                             startSeconds !== null
                               ? "cursor-pointer ring-offset-2 ring-offset-zinc-950 transition hover:ring-2 hover:ring-zinc-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400"
                               : ""
@@ -529,37 +550,37 @@ export function MovieVideoSection({
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-2 align-top">
                         {formatTimecode(shot.start_time, 25)}
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-2 align-top">
                         {formatTimecode(shot.end_time, 25)}
                       </td>
-                      <td className="px-4 py-3 align-top text-zinc-300">
+                      <td className="px-4 py-2 align-top text-zinc-300">
                         {frameCount ?? "—"}
                       </td>
-                      <td className="px-4 py-3 align-top text-zinc-300">
+                      <td className="px-4 py-2 align-top text-zinc-300">
                         {vfxIdCleaned ?? "—"}
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-2 align-top">
                         {shot.sequence_vfx_id ?? "—"}
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-2 align-top">
                         {shot.sequence_category ?? "—"}
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-2 align-top">
                         {sequenceDescription ?? "—"}
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-2 align-top">
                         {sequenceCommentValue ?? "—"}
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-2 align-top">
                         {shot.episode_name ?? "—"}
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-2 align-top">
                         {shot.decor ?? "—"}
                       </td>
-                      <td className="px-4 py-3 align-top">
+                      <td className="px-4 py-2 align-top">
                         {shot.action_generale ?? "—"}
                       </td>
                     </tr>

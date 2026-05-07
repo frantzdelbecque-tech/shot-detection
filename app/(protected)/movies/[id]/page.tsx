@@ -83,7 +83,7 @@ export default async function MovieDetailPage({
   const shotVignetteCacheBuster = id;
 
   return (
-    <div className="mx-auto w-[90%] max-w-none px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto w-[90%] max-w-none px-4 py-3 sm:px-6 lg:px-8">
       {shotsError && (
         <p className="mb-6 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
           Impossible de charger les plans : {shotsError.message}
